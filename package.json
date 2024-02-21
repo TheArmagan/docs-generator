@@ -10,12 +10,14 @@
   "author": "Kıraç Armağan Önal",
   "license": "GPL-3.0-only",
   "devDependencies": {
+    "@types/jsdom": "^21.1.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
     "jsdom": "^24.0.0",
     "plsargs": "^0.1.6",
+    "stuffs": "^0.1.37",
     "yaml": "^2.3.4"
   }
 }

@@ -2,3 +2,11 @@ links:
   - name: "GitHub"
     url: https://github.com/TheArmagan
     icon: assets://github.png
+
+languages:
+  default: en
+  supported:
+    - en
+    - tr
+
+start-page: getting-started/start
