@@ -34,14 +34,14 @@ async function makeSureExist(p: string) {
   const PROJECT_PATH = args.has("project") ? path.resolve(args.get("project")) : path.join(__dirname, "../project");
   const OUT_PATH = args.has("out") ? path.resolve(args.get("out")) : path.join(__dirname, "../out");
 
-  if (!existsSync(PROJECT_PATH)) throw new Error("Project path does not exist");
+  await makeSureExist(PROJECT_PATH);
 
   if (existsSync(OUT_PATH)) {
     await Promise.all((await fs.readdir(OUT_PATH)).map(async (f) => {
       await fs.rm(path.join(OUT_PATH, f), { recursive: true });
     }));
   }
-  if (!existsSync(OUT_PATH)) await fs.mkdir(OUT_PATH, { recursive: true });
+  await makeSureExist(OUT_PATH);
 
   const config = yaml.parse(await fs.readFile(path.join(PROJECT_PATH, "./config.yml"), "utf-8"));
 
