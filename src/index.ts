@@ -16,16 +16,17 @@ type Page = {
   title: Record<string, string>,
 }
 
-function getIconHTML(icon: string) {
+function getIconHTML(icon: string, size = 24) {
   if (icon.startsWith("assets://")) {
-    return `<img class="icon" src="/~/assets/${icon.slice(9)}" alt="icon" height="24" />`;
+    return `<img class="icon" src="/~/assets/${icon.slice(9)}" alt="icon" height="${size}" />`;
   } else {
-    return `<span class="material-symbols-outlined icon">${icon}</span>`;
+    return `<span class="material-symbols-outlined icon" style="font-size: ${size}px">${icon}</span>`;
   }
 }
 
 async function makeSureExist(p: string) {
-  const d = path.parse(p).dir;
+  const parsed = path.parse(p);
+  const d = parsed.dir;
   if (!existsSync(d)) await fs.mkdir(d, { recursive: true });
 }
 
@@ -69,14 +70,20 @@ async function makeSureExist(p: string) {
 
   const buttonsHTML = config.links.map(link => {
     return `<a class="button" title="${link.name}" href="${link.url}">
-      ${getIconHTML(link.icon)}
+      ${getIconHTML(link.icon, 24)}
     </a>`
   }).join("\n");
 
   await Promise.all(
     config.languages.supported.map(async (langCode) => {
+      const langFilePath = path.join(OUT_PATH, langCode, "index.html");
+      await makeSureExist(langFilePath);
+      await fs.writeFile(
+        langFilePath,
+        `<html><head><meta http-equiv="refresh" content="0; url=/${langCode}/${config["start-page"]}" /></head></html>`
+      );
       await Promise.all(categories.map(async (cat) => {
-        const displayName = cat.config["display-name"][langCode] || cat.config["display-name"][config.languages.default];
+        const catDisplayName = cat.config["display-name"][langCode] || cat.config["display-name"][config.languages.default];
         await Promise.all(cat.pages.map(async (page) => {
           const pageFilePath = path.join(OUT_PATH, `${langCode}/${cat.id}/${page.id}/index.html`);
           await makeSureExist(pageFilePath);
@@ -86,15 +93,18 @@ async function makeSureExist(p: string) {
               "%app.sections%": categories.map(c => {
                 return `
                 <div class="section">
-                  <div class="head">
-                    <div class="name">${displayName}</div>
-                    <span class="material-symbols-outlined"> expand_more </span>
-                  </div>
-                  <div class="contents">
+                  <a class="head${c.id === cat.id ? " active" : ""}" href="/${langCode}/${c.id}/${c.pages[0].id}">
+                    <div class="name-container">
+                      ${c.config.icon ? getIconHTML(c.config.icon, 20) : ""}
+                      <div class="name">${catDisplayName}</div>
+                    </div>
+                    <span class="material-symbols-outlined icon">expand_more</span>
+                  </a>
+                  <div class="contents${c.id === cat.id ? " visible" : ""}">
                     ${c.pages.map(p => {
                   return `<a ${(c.id + p.id === cat.id + page.id) ? `class="active" ` : ""}href="/${langCode}/${c.id}/${p.id}">${p.title[langCode] || p.title[config.languages.default]}</a>`;
                 }).join("\n")}
-                  </div>
+                    </div>
                 </div>
                 `
               }).join("\n"),
@@ -107,8 +117,10 @@ async function makeSureExist(p: string) {
                 `
               }).join("\n"),
               "%app.nav_buttons%": buttonsHTML,
-              "%head.title%": page.title[langCode] || page.title[config.languages.default],
-              "%head.other%": ""
+              "%head.title%": `${catDisplayName} - ${page.title[langCode] || page.title[config.languages.default]}`,
+              "%head.other%": "",
+              "%app.lang%": langCode,
+              "%app.next_lang%": config.languages.supported[(config.languages.supported.indexOf(langCode) + 1) % config.languages.supported.length],
             })
           )
           await Promise.all(page.sections.map(async (section) => {

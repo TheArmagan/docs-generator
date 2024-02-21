@@ -98,6 +98,8 @@ html,
      -moz-user-select: none;
           user-select: none;
   cursor: pointer;
+  color: currentColor;
+  text-decoration: none;
 }
 #app > .top-nav > .controls > .buttons .button:hover {
   opacity: 1;
@@ -133,19 +135,35 @@ html,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  text-decoration: none;
+  color: currentColor;
   transition: border 0.1s ease-in-out;
   border: 1px solid rgba(255, 255, 255, 0);
+}
+#app > .left-nav .section > .head > .name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+#app > .left-nav .section > .head > .icon {
+  display: inline;
 }
 #app > .left-nav .section > .head:hover, #app > .left-nav .section > .head.active {
   background-color: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
+#app > .left-nav .section > .head:hover > .icon, #app > .left-nav .section > .head.active > .icon {
+  transform: rotate(180deg);
+}
 #app > .left-nav .section > .contents {
   margin-left: 1rem;
   border-left: 1px solid rgba(255, 255, 255, 0.25);
-  display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  display: flex;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.1s ease-in-out;
 }
 #app > .left-nav .section > .contents a {
   color: currentColor;
@@ -161,6 +179,9 @@ html,
 #app > .left-nav .section > .contents a:hover, #app > .left-nav .section > .contents a.active {
   opacity: 1;
   background-color: rgba(255, 255, 255, 0.1);
+}
+#app > .left-nav .section > .contents.visible, #app > .left-nav .section:hover > .contents {
+  max-height: 100%;
 }
 #app > .content {
   overflow: overlay;
