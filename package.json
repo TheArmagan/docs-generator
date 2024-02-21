@@ -1,0 +1,21 @@
+{
+  "name": "docs-generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts"
+  },
+  "keywords": [],
+  "author": "Kıraç Armağan Önal",
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "jsdom": "^24.0.0",
+    "plsargs": "^0.1.6",
+    "yaml": "^2.3.4"
+  }
+}
