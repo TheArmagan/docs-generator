@@ -158,9 +158,15 @@ async function makeSureExist(p: string) {
       await makeSureExist(langFilePath);
       await fs.writeFile(
         langFilePath,
-        `<html><head><meta http-equiv="refresh" content="0; url=/${langCode}/${config["start-page"]}" /></head></html>`
+        formatHTML(`<html><head><meta http-equiv="refresh" content="0; url=/${langCode}/${config["start-page"]}" /></head></html>`)
       );
       await Promise.all(categories.map(async (cat) => {
+        const catFileName = path.join(OUT_PATH, langCode, cat.id, "index.html");
+        await makeSureExist(catFileName);
+        await fs.writeFile(
+          catFileName,
+          formatHTML(`<html><head><meta http-equiv="refresh" content="0; url=/${langCode}/${cat.id}/${cat.pages[0].id}" /></head></html>`)
+        );
         const catDisplayName = cat.config["display-name"][langCode] || cat.config["display-name"][config.languages.default];
         await Promise.all(cat.pages.map(async (page) => {
           const pageFilePath = path.join(OUT_PATH, `${langCode}/${cat.id}/${page.id}/index.html`);
