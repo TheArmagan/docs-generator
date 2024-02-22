@@ -167,7 +167,7 @@ async function makeSureExist(p: string) {
                   <a class="head${c.id === cat.id ? " active" : ""}" href="/${langCode}/${c.id}/${c.pages[0].id}">
                     <div class="name-container">
                       ${c.config.icon ? getIconHTML(c.config.icon, 20) : ""}
-                      <div class="name">${catDisplayName}</div>
+                      <div class="name">${c.config["display-name"][langCode] || c.config["display-name"][config.languages.default]}</div>
                     </div>
                     <span class="material-symbols-outlined icon">expand_more</span>
                   </a>
