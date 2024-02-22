@@ -20,6 +20,14 @@ type Page = {
   title: Record<string, string>,
 }
 
+function parseAssetPath(p: string) {
+  if (p.startsWith("assets://")) {
+    return `/~/assets/${p.slice(9)}`;
+  } else {
+    return p;
+  }
+}
+
 function getIconHTML(icon: string, size = 24) {
   if (icon.startsWith("assets://")) {
     return `<img class="icon" src="/~/assets/${icon.slice(9)}" alt="icon" height="${size}" />`;
@@ -194,6 +202,7 @@ async function makeSureExist(p: string) {
               "%app.current_path%": `${cat.id}/${page.id}`,
               "%app.lang%": langCode,
               "%app.next_lang%": config.languages.supported[(config.languages.supported.indexOf(langCode) + 1) % config.languages.supported.length],
+              "%head.icon%": config.icon ? parseAssetPath(config.icon) : "",
             }))
           )
           // await Promise.all(page.sections.map(async (section) => {
