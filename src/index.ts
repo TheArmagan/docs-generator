@@ -5,6 +5,10 @@ import path from "path";
 import stuffs from "stuffs";
 import yaml from "yaml";
 import { JSDOM } from "jsdom";
+import beautify from "js-beautify";
+
+
+
 const args = plsParseArgs(process.argv.slice(2));
 
 type CategoryConfig = {
@@ -22,6 +26,18 @@ function getIconHTML(icon: string, size = 24) {
   } else {
     return `<span class="material-symbols-outlined icon" style="font-size: ${size}px">${icon}</span>`;
   }
+}
+
+function formatCSS(css: string) {
+  return beautify.css_beautify(css, {
+    indent_size: 2,
+  })
+}
+
+function formatHTML(t: string) {
+  return beautify.html_beautify(t, {
+    indent_size: 2,
+  })
 }
 
 async function makeSureExist(p: string) {
@@ -46,17 +62,65 @@ async function makeSureExist(p: string) {
 
   const config = yaml.parse(await fs.readFile(path.join(PROJECT_PATH, "./config.yml"), "utf-8"));
 
+  const { window } = new JSDOM();
+  const domParser = new window.DOMParser();
+
+  const styleTexts: string[] = [];
+  const components = Object.fromEntries(
+    await Promise.all((await fs.readdir(path.join(PROJECT_PATH, "./components"))).map(async (componentFileName) => {
+      const content = await fs.readFile(path.join(PROJECT_PATH, "./components", componentFileName), "utf-8");
+      let styleAdded = false;
+      return [
+        componentFileName.slice(0, -5),
+        (slotContent: any[]) => {
+          const document = domParser.parseFromString(
+            content,
+            "text/html"
+          );
+          const slot = document.querySelector("slot");
+          if (slot) {
+            if (slotContent.length) {
+              slot.replaceWith(...slotContent);
+            } else {
+              if (slot.childNodes.length) {
+                slot.replaceWith(...slot.childNodes);
+              } else {
+                slot.remove();
+              }
+            }
+          }
+          if (!styleAdded) {
+            styleAdded = true;
+            let style = document.querySelector("style")?.textContent || "";
+            if (style) styleTexts.push(style);
+          }
+          return [...document.body.childNodes].filter(i => i.nodeName !== "STYLE");
+        }
+      ]
+    }))
+  );
+
   const categories = await Promise.all((await fs.readdir(path.join(PROJECT_PATH, "./docs"))).map(async (categoryFolderName) => {
     return {
       pages: await Promise.all((await fs.readdir(path.join(PROJECT_PATH, "./docs", categoryFolderName))).filter(f => f.endsWith(".html")).map(async (pageFileName) => {
-        const { window } = new JSDOM(await fs.readFile(path.join(PROJECT_PATH, "./docs", categoryFolderName, pageFileName), "utf-8"));
-        const document = window.document;
-        const sections = [...document.querySelectorAll("section")].map(section => {
-          return [
-            section.getAttribute("lang") || config.languages.default,
-            section.innerHTML // TODO: parse all the stuff
-          ]
+        const document = domParser.parseFromString(
+          await fs.readFile(path.join(PROJECT_PATH, "./docs", categoryFolderName, pageFileName), "utf-8"),
+          "text/html"
+        );
+
+        document.querySelectorAll("component").forEach((component) => {
+          const name = component.getAttribute("name");
+          component.replaceWith(...components[name]([...component.childNodes]));
         });
+
+        const sections = Object.fromEntries(
+          [...document.querySelectorAll("section")].map(section => {
+            return [
+              section.getAttribute("lang") || config.languages.default,
+              section.innerHTML
+            ]
+          })
+        );
         return {
           title: Object.fromEntries([...document.head.querySelectorAll("title")].map(i => [i.getAttribute("lang") || config.languages.default, i.textContent.trim()])),
           sections,
@@ -74,6 +138,12 @@ async function makeSureExist(p: string) {
     </a>`
   }).join("\n");
 
+  const headOther: string[] = [];
+
+  headOther.push(
+    `<style id="dg--component-styles">${formatCSS(styleTexts.join("\n"))}</style>`,
+  );
+
   await Promise.all(
     config.languages.supported.map(async (langCode) => {
       const langFilePath = path.join(OUT_PATH, langCode, "index.html");
@@ -87,9 +157,10 @@ async function makeSureExist(p: string) {
         await Promise.all(cat.pages.map(async (page) => {
           const pageFilePath = path.join(OUT_PATH, `${langCode}/${cat.id}/${page.id}/index.html`);
           await makeSureExist(pageFilePath);
+          const sectionHTML = page.sections[langCode];
           await fs.writeFile(
             pageFilePath,
-            stuffs.mapReplace(TEMPLATE_HTML, {
+            formatHTML(stuffs.mapReplace(TEMPLATE_HTML, {
               "%app.sections%": categories.map(c => {
                 return `
                 <div class="section">
@@ -118,14 +189,15 @@ async function makeSureExist(p: string) {
               }).join("\n"),
               "%app.nav_buttons%": buttonsHTML,
               "%head.title%": `${catDisplayName} - ${page.title[langCode] || page.title[config.languages.default]}`,
-              "%head.other%": "",
+              "%head.other%": headOther.join("\n"),
+              "%app.content%": sectionHTML,
               "%app.lang%": langCode,
               "%app.next_lang%": config.languages.supported[(config.languages.supported.indexOf(langCode) + 1) % config.languages.supported.length],
-            })
+            }))
           )
-          await Promise.all(page.sections.map(async (section) => {
+          // await Promise.all(page.sections.map(async (section) => {
 
-          }))
+          // }))
         }));
       }));
     })
@@ -137,6 +209,6 @@ async function makeSureExist(p: string) {
   await fs.cp(path.join(PROJECT_PATH, "assets"), path.join(OUT_PATH, "./~/assets"), { recursive: true });
   await fs.writeFile(
     path.join(OUT_PATH, "index.html"),
-    `<html><head><meta http-equiv="refresh" content="0; url=/${config.languages.default}/${config["start-page"]}" /></head></html>`
+    formatHTML(`<html><head><meta http-equiv="refresh" content="0; url=/${config.languages.default}/${config["start-page"]}" /></head></html>`)
   );
 })();
