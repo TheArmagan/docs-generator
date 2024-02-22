@@ -78,6 +78,7 @@ async function makeSureExist(p: string) {
     await Promise.all((await fs.readdir(path.join(PROJECT_PATH, "./components"))).map(async (componentFileName) => {
       const content = await fs.readFile(path.join(PROJECT_PATH, "./components", componentFileName), "utf-8");
       let styleAdded = false;
+      let styleMap: Record<string, string> = {};
       return [
         componentFileName.slice(0, -5),
         (slotContent: any[]) => {
@@ -100,8 +101,36 @@ async function makeSureExist(p: string) {
           if (!styleAdded) {
             styleAdded = true;
             let style = document.querySelector("style")?.textContent || "";
-            if (style) styleTexts.push(style);
+            if (style) {
+              let classeLines = [...(style.match(/\.[^ ;]+.*[^;]\n/g) || [])];
+              let classes = classeLines
+                .map(cs => [...(cs.match(/\.[^ >.&#\[]+/) || [])])
+                .flat(1);
+
+              for (const className of classes) {
+                let replaceName = `${className}-${Math.random().toString(33).slice(2, -4)}`;
+                for (const classLine of classeLines) {
+                  const nClassLine = classLine.replaceAll(className, replaceName);
+                  if (nClassLine !== classLine) {
+                    style = style.replaceAll(classLine, nClassLine);
+                  }
+                }
+              styleMap[className] = replaceName;
+            }
+              styleTexts.push(style);
+            }
           }
+
+          let innerHTML = document.body.innerHTML;
+
+          for (const [className, nClassName] of Object.entries(styleMap)) {
+            innerHTML = innerHTML.replaceAll(/class="[^"]+"/g, (line) => {
+              return line.replaceAll(className.slice(1), nClassName.slice(1))
+            })
+          }
+
+          document.body.innerHTML = innerHTML;
+
           return [...document.body.childNodes].filter(i => i.nodeName !== "STYLE");
         }
       ]
