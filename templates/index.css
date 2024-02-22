@@ -19,6 +19,10 @@ html,
   padding: 1rem;
   gap: 1rem;
   position: relative;
+  transition: opacity 0.1s ease-in-out;
+}
+#app.hidden {
+  opacity: 0;
 }
 #app > .top-nav {
   position: absolute;

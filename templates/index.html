@@ -18,29 +18,33 @@
     %head.other%
   </head>
   <body>
-    <div id="app">
+    <div id="app" class="hidden">
       <div class="top-nav">
-        <div class="history">
-          %app.history%
-        </div>
+        <div class="history">%app.history%</div>
         <div class="controls">
           <div class="buttons">
-            <a class="button" title="Switch Language" href="/%app.next_lang%">
+            <a
+              class="button"
+              title="Switch Language to %app.next_lang%"
+              href="/%app.next_lang%/%app.current_path%"
+            >
               <span class="material-symbols-outlined icon">captive_portal</span>
             </a>
           </div>
           <div class="search">
-            <span class="material-symbols-outlined icon"> search </span>
-            <input type="text" id="search" placeholder="Search.." />
+            <span class="material-symbols-outlined icon">search</span>
+            <input
+              type="text"
+              id="search"
+              placeholder="Search.."
+              autocomplete="off"
+              spellcheck="false"
+            />
           </div>
-          <div class="buttons">
-            %app.nav_buttons%
-          </div>
+          <div class="buttons">%app.nav_buttons%</div>
         </div>
       </div>
-      <div class="left-nav">
-        %app.sections%
-      </div>
+      <div class="left-nav">%app.sections%</div>
       <div class="content">%app.content%</div>
     </div>
     <script src="/~/index.js"></script>

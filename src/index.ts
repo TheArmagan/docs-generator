@@ -190,7 +190,8 @@ async function makeSureExist(p: string) {
               "%app.nav_buttons%": buttonsHTML,
               "%head.title%": `${catDisplayName} - ${page.title[langCode] || page.title[config.languages.default]}`,
               "%head.other%": headOther.join("\n"),
-              "%app.content%": sectionHTML,
+              "%app.content%": sectionHTML || "",
+              "%app.current_path%": `${cat.id}/${page.id}`,
               "%app.lang%": langCode,
               "%app.next_lang%": config.languages.supported[(config.languages.supported.indexOf(langCode) + 1) % config.languages.supported.length],
             }))
